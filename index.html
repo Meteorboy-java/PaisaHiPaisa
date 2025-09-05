@@ -19,9 +19,8 @@
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
         }
-        .card:hover {
+        .card.interactive-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
@@ -38,6 +37,13 @@
         .pdf-btn:hover { background-color: #15803d; }
         .png-btn { background-color: #4f46e5; color: white; }
         .png-btn:hover { background-color: #4338ca; }
+        .control-btn {
+            background-color: #e5e7eb; color: #4b5563; border-radius: 9999px;
+            width: 20px; height: 20px; display: flex; align-items: center;
+            justify-content: center; font-size: 1rem; line-height: 1; font-weight: bold;
+            cursor: pointer;
+        }
+        .control-btn:hover { background-color: #d1d5db; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -46,8 +52,8 @@
         <header class="text-center mb-10">
              <div class="flex flex-col md:flex-row justify-center items-center gap-4">
                 <div class="flex-grow">
-                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Custom Fund Portfolio Analysis</h1>
-                    <p class="mt-4 text-lg text-gray-600">Analyzing investment strategies for your corpus.</p>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Interactive Fund Portfolio Analysis</h1>
+                    <p class="mt-4 text-lg text-gray-600">Analyze & customize investment strategies for your corpus.</p>
                 </div>
                 <div class="flex gap-2">
                     <button id="export-pdf-btn" class="action-btn pdf-btn">Export PDF</button>
@@ -61,7 +67,7 @@
             <input type="number" id="totalInvestmentInput" value="300000" class="mt-2 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xl">
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="plans-container">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" id="plans-container">
             <!-- Plan cards will be injected here by JS -->
         </div>
 
@@ -100,32 +106,44 @@
 
         // --- CONFIGURATION ---
         const funds = {
-            woc_multi_asset: { name: 'WOC Multi Asset Allocation', return: 18.0, type: 'Hybrid', color: '#34d399' },
-            sbi_large_mid: { name: 'SBI Large & Midcap', return: 21.0, type: 'Equity', color: '#fbbf24' },
-            pp_flexi: { name: 'Parag Parikh Flexi Cap', return: 24.0, type: 'Equity', color: '#60a5fa' },
-            invesco_small: { name: 'Invesco India Smallcap', return: 28.0, type: 'Equity', color: '#f87171' },
-            hdfc_small: { name: 'HDFC Small Cap', return: 27.0, type: 'Equity', color: '#fb7185' },
-            hdfc_mid: { name: 'HDFC Mid Cap', return: 25.0, type: 'Equity', color: '#c084fc' },
-            hdfc_flexi: { name: 'HDFC Flexi Cap', return: 22.0, type: 'Equity', color: '#818cf8' }
+            woc_multi_asset: { name: 'WOC Multi Asset', risk: 3, return: 18.0, type: 'Hybrid', color: '#34d399' },
+            sbi_large_mid: { name: 'SBI Large & Midcap', risk: 5, return: 21.0, type: 'Equity', color: '#fbbf24' },
+            pp_flexi: { name: 'Parag Parikh Flexi', risk: 6, return: 24.0, type: 'Equity', color: '#60a5fa' },
+            hdfc_flexi: { name: 'HDFC Flexi Cap', risk: 6, return: 22.0, type: 'Equity', color: '#818cf8' },
+            hdfc_mid: { name: 'HDFC Mid Cap', risk: 7, return: 25.0, type: 'Equity', color: '#c084fc' },
+            invesco_small: { name: 'Invesco Smallcap', risk: 9, return: 28.0, type: 'Equity', color: '#f87171' },
+            hdfc_small: { name: 'HDFC Small Cap', risk: 9, return: 27.0, type: 'Equity', color: '#fb7185' },
         };
         
-        const plans = [
+        const initialPlans = [
             {
-                name: 'Core & Satellite Growth Plan',
+                name: 'Core & Satellite',
                 description: 'A balanced strategy with a solid core in Flexi/Mid caps and aggressive satellites in Small Caps for enhanced returns.',
                 allocations: { pp_flexi: 30, hdfc_mid: 30, sbi_large_mid: 15, hdfc_small: 15, woc_multi_asset: 10, hdfc_flexi: 0, invesco_small: 0 }
             },
             {
-                name: 'High-Conviction Mid & Small Cap',
-                description: 'A focused, higher-risk portfolio concentrating on the growth potential of Mid and Small Cap funds, balanced by a multi-asset fund.',
+                name: 'Mid & Small Cap Focus',
+                description: 'A higher-risk portfolio concentrating on the growth potential of Mid and Small Cap funds, balanced by a multi-asset fund.',
                 allocations: { hdfc_mid: 35, hdfc_small: 25, pp_flexi: 25, woc_multi_asset: 15, sbi_large_mid: 0, invesco_small: 0, hdfc_flexi: 0 }
             },
             {
-                name: 'Manager\'s Choice Flexi Plan',
+                name: 'Manager\'s Choice Flexi',
                 description: 'This dynamic plan allocates heavily to skilled Flexi Cap managers, complemented by strong Mid and Small caps for growth.',
                 allocations: { pp_flexi: 35, hdfc_flexi: 20, hdfc_mid: 30, invesco_small: 15, woc_multi_asset: 0, sbi_large_mid: 0, hdfc_small: 0 }
+            },
+            {
+                name: 'Mid-Cap Momentum',
+                description: 'A strategy heavily favoring proven Mid-Cap funds for high growth, supported by the stability of a Large/Mid cap fund.',
+                allocations: { hdfc_mid: 50, sbi_large_mid: 20, pp_flexi: 20, hdfc_small: 10, woc_multi_asset: 0, invesco_small: 0, hdfc_flexi: 0 }
+            },
+            {
+                name: 'Small-Cap Aggressor',
+                description: 'The most aggressive plan, aiming for maximum returns by focusing on high-performing small-cap funds.',
+                allocations: { hdfc_small: 35, invesco_small: 35, hdfc_mid: 20, woc_multi_asset: 10, pp_flexi: 0, hdfc_flexi: 0, sbi_large_mid: 0 }
             }
         ];
+
+        let currentPlansState = JSON.parse(JSON.stringify(initialPlans));
         
         // --- CHART INSTANCES ---
         let allocationPieChart, growthContributionChart, taxEfficiencyChart, mainLineChart;
@@ -136,6 +154,13 @@
             if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
             if (value >= 100000) return `₹${(value / 100000).toFixed(2)} L`;
             return `₹${value.toLocaleString('en-IN')}`;
+        }
+        
+        function calculateRiskScore(allocations) {
+            const score = Object.entries(allocations).reduce((acc, [key, perc]) => {
+                return acc + (funds[key].risk * (perc / 100));
+            }, 0);
+            return score.toFixed(1);
         }
 
         function calculatePlanMetrics(plan) {
@@ -181,39 +206,68 @@
 
 
         // --- UI & CHARTING ---
-        function renderPlanCards() {
+        function renderSingleCard(planIndex) {
+            const plan = currentPlansState[planIndex];
+            const metrics = calculatePlanMetrics(plan);
+            const riskScore = calculateRiskScore(plan.allocations);
+            const totalDistributed = Object.values(plan.allocations).reduce((a, b) => a + b, 0);
+            
+            let cardHTML = `
+                <div class="flex justify-between items-start">
+                    <h2 class="text-2xl font-bold text-gray-800">${plan.name}</h2>
+                    <div class="text-right">
+                        <p class="text-xs font-semibold text-gray-500">RISK SCORE</p>
+                        <p class="text-2xl font-bold text-blue-600">${riskScore}</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 mt-2 mb-4 h-12">${plan.description}</p>
+                <div class="bg-blue-50 p-4 rounded-lg text-center mb-4">
+                    <p class="text-sm font-medium text-blue-800">Post-Tax Annual Return</p>
+                    <p class="text-3xl font-bold text-blue-600">${formatIndianCurrency(metrics.totalPostTaxReturn)}</p>
+                    <p class="text-md font-semibold text-blue-500">${((metrics.totalPostTaxReturn / totalInvestment) * 100).toFixed(2)}%</p>
+                </div>
+                <div class="text-xs space-y-1 mb-4">
+                    <p><strong>Pre-Tax Return:</strong> <span class="float-right font-medium text-green-600">${formatIndianCurrency(metrics.totalPreTaxReturn)}</span></p>
+                    <p><strong>Estimated Tax:</strong> <span class="float-right font-medium text-red-600">${formatIndianCurrency(metrics.totalTax)}</span></p>
+                </div>
+                <h4 class="font-semibold text-sm mb-2 text-gray-700">Distribution:</h4>
+                <ul class="text-sm space-y-2">
+                    ${Object.entries(plan.allocations).map(([key, perc]) => `
+                        <li class="flex justify-between items-center">
+                            <span class="text-xs">${funds[key].name}</span>
+                            <div class="flex items-center gap-2">
+                                <button class="control-btn btn-minus" data-plan-index="${planIndex}" data-fund-key="${key}">-</button>
+                                <span class="font-bold w-12 text-center">${perc.toFixed(0)}%</span>
+                                <button class="control-btn btn-plus" data-plan-index="${planIndex}" data-fund-key="${key}">+</button>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+                <div class="mt-4 pt-2 border-t">
+                    <p class="text-sm font-bold ${totalDistributed.toFixed(0) != 100 ? 'text-red-500' : 'text-gray-800'}">
+                        Distributed: <span class="float-right">${totalDistributed.toFixed(0)}%</span>
+                    </p>
+                </div>
+            `;
+            const cardElement = document.querySelector(`.card[data-plan-index='${planIndex}']`);
+            if(cardElement) cardElement.innerHTML = cardHTML;
+        }
+
+
+        function renderAllCards() {
             const container = document.getElementById('plans-container');
             container.innerHTML = ''; // Clear existing cards
-            plans.forEach((plan, index) => {
-                const metrics = calculatePlanMetrics(plan);
+            currentPlansState.forEach((_, index) => {
                 const card = document.createElement('div');
-                card.className = 'card p-6';
+                card.className = 'card p-6 interactive-card';
                 card.dataset.planIndex = index;
-                card.innerHTML = `
-                    <h2 class="text-2xl font-bold text-gray-800">${plan.name}</h2>
-                    <p class="text-sm text-gray-600 mt-2 mb-4 h-12">${plan.description}</p>
-                    <div class="bg-blue-50 p-4 rounded-lg text-center mb-4">
-                        <p class="text-sm font-medium text-blue-800">Post-Tax Annual Return</p>
-                        <p class="text-3xl font-bold text-blue-600">${formatIndianCurrency(metrics.totalPostTaxReturn)}</p>
-                        <p class="text-md font-semibold text-blue-500">${((metrics.totalPostTaxReturn / totalInvestment) * 100).toFixed(2)}%</p>
-                    </div>
-                    <div class="text-xs space-y-1 mb-4">
-                        <p><strong>Pre-Tax Return:</strong> <span class="float-right font-medium text-green-600">${formatIndianCurrency(metrics.totalPreTaxReturn)}</span></p>
-                        <p><strong>Estimated Tax:</strong> <span class="float-right font-medium text-red-600">${formatIndianCurrency(metrics.totalTax)}</span></p>
-                    </div>
-                    <h4 class="font-semibold text-sm mb-2 text-gray-700">Distribution:</h4>
-                    <ul class="text-xs space-y-1">
-                        ${Object.entries(plan.allocations).filter(([_, perc]) => perc > 0).map(([key, perc]) => `
-                            <li>${funds[key].name}: <span class="float-right font-medium">${formatIndianCurrency(totalInvestment * perc / 100)} (${perc}%)</span></li>
-                        `).join('')}
-                    </ul>
-                `;
                 container.appendChild(card);
+                renderSingleCard(index);
             });
         }
 
         function updateAnalysisCharts(planIndex) {
-            const plan = plans[planIndex];
+            const plan = currentPlansState[planIndex];
             const metrics = calculatePlanMetrics(plan);
             
             document.getElementById('analysis-title').innerText = `Analysis for: ${plan.name}`;
@@ -343,28 +397,51 @@
         // --- INITIALIZATION ---
         function initialize() {
             totalInvestment = parseFloat(totalInvestmentInput.value) || 300000;
-            renderPlanCards();
-            
-            // Add click listeners to cards
-            document.querySelectorAll('#plans-container .card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    activePlanIndex = e.currentTarget.dataset.planIndex;
-                    updateAnalysisCharts(activePlanIndex);
-                });
-            });
-
-            // Initial chart state 
+            currentPlansState = JSON.parse(JSON.stringify(initialPlans));
+            renderAllCards();
             updateAnalysisCharts(activePlanIndex);
-            
-            exportPdfBtn.addEventListener('click', exportToPDF);
-            exportPngBtn.addEventListener('click', exportToPNG);
-            
-            totalInvestmentInput.addEventListener('change', initialize);
-            totalInvestmentInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') initialize(); });
         }
 
+        document.getElementById('plans-container').addEventListener('click', (e) => {
+            const target = e.target;
+
+            // Handle +/- button clicks
+            if (target.classList.contains('control-btn')) {
+                const { planIndex, fundKey } = target.dataset;
+                const isPlus = target.classList.contains('btn-plus');
+                
+                let currentVal = currentPlansState[planIndex].allocations[fundKey];
+                
+                if (isPlus && currentVal < 100) {
+                    currentPlansState[planIndex].allocations[fundKey] += 1;
+                } else if (!isPlus && currentVal > 0) {
+                    currentPlansState[planIndex].allocations[fundKey] -= 1;
+                }
+                
+                renderSingleCard(planIndex);
+                if (planIndex == activePlanIndex) {
+                    updateAnalysisCharts(activePlanIndex);
+                }
+            } 
+            // Handle card selection for analysis
+            else {
+                const card = target.closest('.card.interactive-card');
+                if (card) {
+                    activePlanIndex = card.dataset.planIndex;
+                    updateAnalysisCharts(activePlanIndex);
+                }
+            }
+        });
+
+        exportPdfBtn.addEventListener('click', exportToPDF);
+        exportPngBtn.addEventListener('click', exportToPNG);
+        
+        totalInvestmentInput.addEventListener('change', initialize);
+        totalInvestmentInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') initialize(); });
+        
         window.onload = initialize;
     </script>
 </body>
 </html>
+
 
