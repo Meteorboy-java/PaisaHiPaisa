@@ -47,7 +47,7 @@
              <div class="flex flex-col md:flex-row justify-center items-center gap-4">
                 <div class="flex-grow">
                     <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Custom Fund Portfolio Analysis</h1>
-                    <p class="mt-4 text-lg text-gray-600">Analyzing investment strategies for a corpus of ₹3,00,000.</p>
+                    <p class="mt-4 text-lg text-gray-600">Analyzing investment strategies for your corpus.</p>
                 </div>
                 <div class="flex gap-2">
                     <button id="export-pdf-btn" class="action-btn pdf-btn">Export PDF</button>
@@ -55,6 +55,11 @@
                 </div>
             </div>
         </header>
+
+        <div class="max-w-md mx-auto mb-8 p-6 bg-white rounded-xl shadow-md">
+            <label for="totalInvestmentInput" class="block text-lg font-medium text-gray-700">Total Investment Amount (INR)</label>
+            <input type="number" id="totalInvestmentInput" value="300000" class="mt-2 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xl">
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="plans-container">
             <!-- Plan cards will be injected here by JS -->
@@ -86,13 +91,14 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const totalInvestment = 300000;
-        const inflationRate = 0.06; // 6%
+        // --- DOM Elements & State ---
+        const totalInvestmentInput = document.getElementById('totalInvestmentInput');
         const exportPdfBtn = document.getElementById('export-pdf-btn');
         const exportPngBtn = document.getElementById('export-png-btn');
+        let totalInvestment = 300000;
+        const inflationRate = 0.06; // 6%
 
-        // Researched approximate 5-year CAGR for the specified funds
+        // --- CONFIGURATION ---
         const funds = {
             woc_multi_asset: { name: 'WOC Multi Asset Allocation', return: 18.0, type: 'Hybrid', color: '#34d399' },
             sbi_large_mid: { name: 'SBI Large & Midcap', return: 21.0, type: 'Equity', color: '#fbbf24' },
@@ -229,16 +235,27 @@
             const { nominal, inflation } = calculateProjection(totalInvestment, postTaxRate);
             const yearLabels = Array.from({ length: 15 }, (_, i) => `Y${i + 1}`);
 
+            // Tooltip callback configuration
+            const tooltipLabelCallback = (context) => `${context.label || ''}: ${formatIndianCurrency(context.raw)}`;
+            const pieTooltipLabelCallback = (context) => {
+                const label = context.label || '';
+                const value = context.raw;
+                const amount = totalInvestment * (value / 100);
+                return `${label}: ${value.toFixed(1)}% (${formatIndianCurrency(amount)})`;
+            };
+            const lineTooltipLabelCallback = (context) => `${context.dataset.label || ''}: ${formatIndianCurrency(context.parsed.y)}`;
+            const growthTooltipLabelCallback = (context) => `${context.dataset.label || ''}: ${formatIndianCurrency(context.raw)}`;
+
 
             // Update or create charts
             if (allocationPieChart) { allocationPieChart.data = { labels: allocationLabels, datasets: [{ data: allocationData, backgroundColor: allocationColors }] }; allocationPieChart.update('none'); } 
-            else { allocationPieChart = new Chart(document.getElementById('allocation-pie-chart'), { type: 'doughnut', data: { labels: allocationLabels, datasets: [{ data: allocationData, backgroundColor: allocationColors }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
+            else { allocationPieChart = new Chart(document.getElementById('allocation-pie-chart'), { type: 'doughnut', data: { labels: allocationLabels, datasets: [{ data: allocationData, backgroundColor: allocationColors }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: pieTooltipLabelCallback } } } } }); }
 
             if (growthContributionChart) { growthContributionChart.data.datasets = growthDatasets; growthContributionChart.update('none'); }
-            else { growthContributionChart = new Chart(document.getElementById('growth-contribution-chart'), { type: 'bar', data: { labels: ['Post-Tax Return'], datasets: growthDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (v) => formatIndianCurrency(v) } } }, plugins: { legend: { display: false } } } }); }
+            else { growthContributionChart = new Chart(document.getElementById('growth-contribution-chart'), { type: 'bar', data: { labels: ['Post-Tax Return'], datasets: growthDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: growthTooltipLabelCallback } } } } }); }
 
             if (taxEfficiencyChart) { taxEfficiencyChart.data.datasets[0].data = [metrics.equityTax, metrics.debtAndOtherTax]; taxEfficiencyChart.update('none'); }
-            else { taxEfficiencyChart = new Chart(document.getElementById('tax-efficiency-chart'), { type: 'doughnut', data: { labels: ['Equity/Hybrid Tax', 'Debt/Other Tax'], datasets: [{ data: [metrics.equityTax, metrics.debtAndOtherTax], backgroundColor: ['#ef4444', '#f97316'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
+            else { taxEfficiencyChart = new Chart(document.getElementById('tax-efficiency-chart'), { type: 'doughnut', data: { labels: ['Equity/Hybrid Tax', 'Debt/Other Tax'], datasets: [{ data: [metrics.equityTax, metrics.debtAndOtherTax], backgroundColor: ['#ef4444', '#f97316'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: tooltipLabelCallback } } } } }); }
             
             if (mainLineChart) {
                 mainLineChart.data.datasets[0].data = nominal;
@@ -249,7 +266,7 @@
                     type: 'line', data: { labels: yearLabels, datasets: [
                         { label: 'Portfolio Growth', data: nominal, borderColor: '#3b82f6', tension: 0.1, fill: false },
                         { label: 'Inflation Baseline', data: inflation, borderColor: '#6b7280', tension: 0.1, fill: false, borderDash: [5, 5] },
-                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: (v) => formatIndianCurrency(v) } } }, plugins: { legend: { display: true, position: 'top' } } }
+                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: true, position: 'top' }, tooltip: { callbacks: { label: lineTooltipLabelCallback } } } }
                 });
             }
         }
@@ -320,24 +337,30 @@
                 charts.forEach((chart) => { if (chart) { chart.options.animation = true; chart.update('none'); } });
             });
         }
+        
+        let activePlanIndex = 0;
 
         // --- INITIALIZATION ---
         function initialize() {
+            totalInvestment = parseFloat(totalInvestmentInput.value) || 300000;
             renderPlanCards();
             
             // Add click listeners to cards
             document.querySelectorAll('#plans-container .card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    const planIndex = e.currentTarget.dataset.planIndex;
-                    updateAnalysisCharts(planIndex);
+                    activePlanIndex = e.currentTarget.dataset.planIndex;
+                    updateAnalysisCharts(activePlanIndex);
                 });
             });
 
-            // Initial chart state (e.g., select first plan)
-            updateAnalysisCharts(0);
+            // Initial chart state 
+            updateAnalysisCharts(activePlanIndex);
             
             exportPdfBtn.addEventListener('click', exportToPDF);
             exportPngBtn.addEventListener('click', exportToPNG);
+            
+            totalInvestmentInput.addEventListener('change', initialize);
+            totalInvestmentInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') initialize(); });
         }
 
         window.onload = initialize;
