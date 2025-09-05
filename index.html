@@ -44,6 +44,51 @@
             cursor: pointer;
         }
         .control-btn:hover { background-color: #d1d5db; }
+
+        @keyframes sweep {
+            0% {
+                transform: translateX(-100%) skewX(-15deg);
+            }
+            100% {
+                transform: translateX(250%) skewX(-15deg);
+            }
+        }
+
+        .javed-special {
+            position: relative;
+            overflow: hidden;
+            background-color: #fefcdd; /* Light cream background */
+            border: 2px solid #495e57;
+        }
+
+        .javed-special::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(244, 206, 20, 0.4) 50%, /* Lighter #f4ce14 */
+                transparent 100%
+            );
+            transform: translateX(-100%) skewX(-15deg);
+            animation: sweep 3s linear infinite;
+            z-index: 1;
+        }
+        
+        .javed-special > * {
+            position: relative;
+            z-index: 2;
+        }
+        .javed-special h2 {
+            color: #495e57;
+        }
+        .distribution-bar-segment {
+            transition: width 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -86,7 +131,8 @@
                  </div>
              </div>
              <div class="mt-12">
-                <h3 class="text-xl font-bold text-center mb-4">15-Year Growth Projection</h3>
+                <h3 class="text-xl font-bold text-center">15-Year Growth Projection</h3>
+                <p id="projection-growth-percentage" class="text-center text-2xl font-bold text-green-600 mb-4"></p>
                 <div class="w-full h-96"><canvas id="main-chart-line"></canvas></div>
              </div>
              <div class="mt-12">
@@ -116,7 +162,13 @@
         };
         
         const initialPlans = [
-             {
+            {
+                name: 'Javed Special',
+                special: true,
+                description: 'A special high-growth plan focusing on Mid and Small Caps, curated for aggressive wealth creation.',
+                allocations: { hdfc_mid: 30, invesco_small: 10, hdfc_small: 30, pp_flexi: 15, sbi_large_mid: 15, woc_multi_asset: 0, hdfc_flexi: 0 }
+            },
+            {
                 name: 'Conservative Growth',
                 description: 'A lower-risk plan focused on stability with a significant allocation to Multi-Asset and Large/Mid Cap funds.',
                 allocations: { woc_multi_asset: 30, sbi_large_mid: 30, pp_flexi: 25, hdfc_mid: 15, hdfc_flexi: 0, invesco_small: 0, hdfc_small: 0 }
@@ -251,7 +303,12 @@
                     <p><strong>Estimated Tax:</strong> <span class="float-right font-medium text-red-600">${formatIndianCurrency(metrics.totalTax)}</span></p>
                 </div>
                 <h4 class="font-semibold text-sm mb-2 text-gray-700">Distribution:</h4>
-                <ul class="text-sm space-y-2">
+                <div class="w-full h-5 rounded-full flex overflow-hidden my-2 border border-gray-200">
+                    ${Object.entries(plan.allocations).filter(([_, perc]) => perc > 0).map(([key, perc]) => `
+                        <div class="distribution-bar-segment" style="width: ${perc}%; background-color: ${funds[key].color};" title="${funds[key].name}: ${perc.toFixed(0)}%"></div>
+                    `).join('')}
+                </div>
+                <ul class="text-sm space-y-2 mt-4">
                     ${Object.entries(plan.allocations).map(([key, perc]) => `
                         <li class="flex justify-between items-center">
                             <span class="text-xs">${funds[key].name}</span>
@@ -277,9 +334,12 @@
         function renderAllCards() {
             const container = document.getElementById('plans-container');
             container.innerHTML = ''; // Clear existing cards
-            currentPlansState.forEach((_, index) => {
+            currentPlansState.forEach((plan, index) => {
                 const card = document.createElement('div');
                 card.className = 'card p-6 interactive-card';
+                if(plan.special) {
+                    card.classList.add('javed-special');
+                }
                 card.dataset.planIndex = index;
                 container.appendChild(card);
                 renderSingleCard(index);
@@ -307,6 +367,11 @@
 
             const postTaxRate = metrics.totalPostTaxReturn / totalInvestment;
             const { nominal, inflation } = calculateProjection(totalInvestment, postTaxRate);
+            
+            const finalAmount = nominal[nominal.length - 1];
+            const growthPercentage = ((finalAmount - totalInvestment) / totalInvestment) * 100;
+            document.getElementById('projection-growth-percentage').textContent = `+${growthPercentage.toFixed(0)}% Growth over 15 Years`;
+            
             const yearLabels = Array.from({ length: 15 }, (_, i) => `Y${i + 1}`);
 
             // Tooltip callback configuration
