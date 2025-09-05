@@ -131,16 +131,15 @@
                  </div>
              </div>
              <div class="mt-12">
-                <h3 class="text-xl font-bold text-center">15-Year Growth Projection</h3>
+                <h3 class="text-xl font-bold text-center">20-Year Growth Projection</h3>
                 <p id="projection-growth-percentage" class="text-center text-2xl font-bold text-green-600 mb-4"></p>
                 <div class="w-full h-96"><canvas id="main-chart-line"></canvas></div>
              </div>
              <div class="mt-12">
                 <div class="text-center mb-4">
-                    <h3 class="text-xl font-bold">Yearly Growth Breakdown</h3>
                     <div class="mt-2 flex justify-center items-center gap-2">
-                        <label for="year-input" class="text-sm font-medium">Show growth after</label>
-                        <input type="number" id="year-input" value="5" min="1" max="15" class="w-20 p-1 border border-gray-300 rounded-md text-center">
+                        <label for="year-input" class="text-sm font-medium">Show growth breakdown after</label>
+                        <input type="number" id="year-input" value="5" min="1" max="20" class="w-20 p-1 border border-gray-300 rounded-md text-center">
                         <label for="year-input" class="text-sm font-medium">years</label>
                     </div>
                 </div>
@@ -279,7 +278,7 @@
             const nominal = [];
             const inflation = [];
             let currentValue = initialAmount;
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 currentValue *= (1 + postTaxRate);
                 nominal.push(currentValue);
                 inflation.push(initialAmount * Math.pow(1 + inflationRate, i + 1));
@@ -288,9 +287,9 @@
         }
         
         function calculateYearlyFundGrowth(plan, years) {
-            const results = { labels: [], data: [], colors: [] };
+            const results = { labels: [], initialAmounts: [], gains: [], colors: [] };
             const { totalPreTaxReturn, totalTax } = calculatePlanMetrics(plan);
-            const effectivePostTaxMultiplier = 1 - (totalTax / totalPreTaxReturn);
+            const effectivePostTaxMultiplier = totalPreTaxReturn > 0 ? (1 - (totalTax / totalPreTaxReturn)) : 1;
 
             for (const key in plan.allocations) {
                 const percentage = plan.allocations[key];
@@ -299,9 +298,11 @@
                     const initialAmount = totalInvestment * (percentage / 100);
                     const postTaxRate = (fund.return / 100) * (fund.type === 'Equity' || fund.type === 'Hybrid' ? effectivePostTaxMultiplier : 1);
                     const finalValue = initialAmount * Math.pow(1 + postTaxRate, years);
+                    const gains = finalValue - initialAmount;
                     
                     results.labels.push(fund.name);
-                    results.data.push(finalValue);
+                    results.initialAmounts.push(initialAmount);
+                    results.gains.push(gains);
                     results.colors.push(fund.color);
                 }
             }
@@ -402,9 +403,9 @@
             
             const finalAmount = nominal[nominal.length - 1];
             const growthPercentage = ((finalAmount - totalInvestment) / totalInvestment) * 100;
-            document.getElementById('projection-growth-percentage').textContent = `+${growthPercentage.toFixed(0)}% Growth over 15 Years`;
+            document.getElementById('projection-growth-percentage').textContent = `+${growthPercentage.toFixed(0)}% Growth over 20 Years`;
             
-            const yearLabels = Array.from({ length: 15 }, (_, i) => `Y${i + 1}`);
+            const yearLabels = Array.from({ length: 20 }, (_, i) => `Y${i + 1}`);
 
             // Tooltip callback configuration
             const pieTooltipLabelCallback = (context) => {
@@ -415,11 +416,14 @@
             };
             const lineTooltipLabelCallback = (context) => `${context.dataset.label || ''}: ${formatIndianCurrency(context.parsed.y)}`;
             const growthTooltipLabelCallback = (context) => `${context.dataset.label || ''}: ${formatIndianCurrency(context.raw)}`;
-            const yearlyGrowthTooltipLabelCallback = (context) => `${context.label || ''}: ${formatIndianCurrency(context.raw)}`;
 
             // Yearly Growth Chart Data
             const years = parseInt(yearInput.value) || 5;
             const yearlyGrowthData = calculateYearlyFundGrowth(plan, years);
+            const yearlyGrowthDatasets = [
+                { label: 'Initial Investment', data: yearlyGrowthData.initialAmounts, backgroundColor: '#cbd5e1' },
+                { label: 'Gains', data: yearlyGrowthData.gains, backgroundColor: yearlyGrowthData.colors }
+            ];
 
             // Growth Milestones Data & Render
             const milestones = [3, 5, 8, 10, 12, 15, 18, 20];
@@ -444,8 +448,38 @@
             if (growthContributionChart) { growthContributionChart.data.datasets = growthDatasets; growthContributionChart.update('none'); }
             else { growthContributionChart = new Chart(document.getElementById('growth-contribution-chart'), { type: 'bar', data: { labels: ['Post-Tax Return'], datasets: growthDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: growthTooltipLabelCallback } } } } }); }
             
-            if (yearlyGrowthChart) { yearlyGrowthChart.data = { labels: yearlyGrowthData.labels, datasets: [{ label: `Value after ${years} years`, data: yearlyGrowthData.data, backgroundColor: yearlyGrowthData.colors }] }; yearlyGrowthChart.update('none'); }
-            else { yearlyGrowthChart = new Chart(document.getElementById('yearly-growth-chart'), { type: 'bar', data: { labels: yearlyGrowthData.labels, datasets: [{ label: `Value after ${years} years`, data: yearlyGrowthData.data, backgroundColor: yearlyGrowthData.colors }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: yearlyGrowthTooltipLabelCallback } } } } }); }
+            if (yearlyGrowthChart) { 
+                yearlyGrowthChart.data.labels = yearlyGrowthData.labels;
+                yearlyGrowthChart.data.datasets = yearlyGrowthDatasets;
+                yearlyGrowthChart.options.plugins.title.text = `Fund Value after ${years} Years`;
+                yearlyGrowthChart.update('none'); 
+            } else { 
+                yearlyGrowthChart = new Chart(document.getElementById('yearly-growth-chart'), { 
+                    type: 'bar', 
+                    data: { labels: yearlyGrowthData.labels, datasets: yearlyGrowthDatasets }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: formatIndianCurrency } } }, 
+                        plugins: { 
+                            title: { display: true, text: `Fund Value after ${years} Years` },
+                            legend: { display: true, position: 'top' }, 
+                            tooltip: { 
+                                callbacks: { 
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${formatIndianCurrency(context.raw)}`;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        const initial = tooltipItems[0].chart.data.datasets[0].data[tooltipItems[0].dataIndex];
+                                        const gains = tooltipItems[0].chart.data.datasets[1].data[tooltipItems[0].dataIndex];
+                                        return `Total: ${formatIndianCurrency(initial + gains)}`;
+                                    }
+                                } 
+                            } 
+                        } 
+                    } 
+                }); 
+            }
 
             
             if (mainLineChart) {
