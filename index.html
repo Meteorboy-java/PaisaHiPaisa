@@ -136,8 +136,21 @@
                 <div class="w-full h-96"><canvas id="main-chart-line"></canvas></div>
              </div>
              <div class="mt-12">
-                <h3 class="text-xl font-bold text-center mb-4">Tax Efficiency Breakdown</h3>
-                 <div class="w-full h-80 flex justify-center"><div class="max-w-xs"><canvas id="tax-efficiency-chart"></canvas></div></div>
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-bold">Yearly Growth Breakdown</h3>
+                    <div class="mt-2 flex justify-center items-center gap-2">
+                        <label for="year-input" class="text-sm font-medium">Show growth after</label>
+                        <input type="number" id="year-input" value="5" min="1" max="15" class="w-20 p-1 border border-gray-300 rounded-md text-center">
+                        <label for="year-input" class="text-sm font-medium">years</label>
+                    </div>
+                </div>
+                 <div class="w-full h-96"><canvas id="yearly-growth-chart"></canvas></div>
+             </div>
+             <div class="mt-12">
+                <h3 class="text-xl font-bold text-center mb-4">Long-Term Growth Milestones</h3>
+                <div id="growth-milestones-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <!-- Milestones will be injected here by JS -->
+                </div>
              </div>
         </div>
     </div>
@@ -147,6 +160,7 @@
         const totalInvestmentInput = document.getElementById('totalInvestmentInput');
         const exportPdfBtn = document.getElementById('export-pdf-btn');
         const exportPngBtn = document.getElementById('export-png-btn');
+        const yearInput = document.getElementById('year-input');
         let totalInvestment = 300000;
         const inflationRate = 0.06; // 6%
 
@@ -218,7 +232,7 @@
         let currentPlansState = JSON.parse(JSON.stringify(initialPlans));
         
         // --- CHART INSTANCES ---
-        let allocationPieChart, growthContributionChart, taxEfficiencyChart, mainLineChart;
+        let allocationPieChart, growthContributionChart, yearlyGrowthChart, mainLineChart;
 
         // --- CALCULATION LOGIC ---
         function formatIndianCurrency(num) {
@@ -236,7 +250,8 @@
         }
 
         function calculatePlanMetrics(plan) {
-            let totalPreTaxReturn = 0, totalEquityGain = 0, totalDebtGain = 0, totalOtherGain = 0;
+            let totalPreTaxReturn = 0;
+            let totalEquityGain = 0;
             let individualReturns = {};
 
             for (const key in plan.allocations) {
@@ -247,21 +262,17 @@
                     const preTaxReturn = amount * (fund.return / 100);
                     totalPreTaxReturn += preTaxReturn;
                     individualReturns[key] = { preTax: preTaxReturn, amount: amount };
-
                     if (fund.type === 'Equity' || fund.type === 'Hybrid') totalEquityGain += preTaxReturn;
-                    else if (fund.type === 'Debt') totalDebtGain += preTaxReturn;
-                    else totalOtherGain += preTaxReturn;
                 }
             }
 
-            const equityLTCGExemption = 125000, equityTaxRate = 0.125, debtTaxRate = 0.20;
+            const equityLTCGExemption = 125000;
+            const equityTaxRate = 0.125;
             const taxableEquityGain = Math.max(0, totalEquityGain - equityLTCGExemption);
-            const equityTax = taxableEquityGain * equityTaxRate;
-            const debtAndOtherTax = (totalDebtGain + totalOtherGain) * debtTaxRate;
-            const totalTax = equityTax + debtAndOtherTax;
+            const totalTax = taxableEquityGain * equityTaxRate;
             const totalPostTaxReturn = totalPreTaxReturn - totalTax;
 
-            return { totalPreTaxReturn, totalPostTaxReturn, totalTax, individualReturns, equityTax, debtAndOtherTax };
+            return { totalPreTaxReturn, totalPostTaxReturn, totalTax, individualReturns };
         }
         
         function calculateProjection(initialAmount, postTaxRate) {
@@ -274,6 +285,27 @@
                 inflation.push(initialAmount * Math.pow(1 + inflationRate, i + 1));
             }
             return { nominal, inflation };
+        }
+        
+        function calculateYearlyFundGrowth(plan, years) {
+            const results = { labels: [], data: [], colors: [] };
+            const { totalPreTaxReturn, totalTax } = calculatePlanMetrics(plan);
+            const effectivePostTaxMultiplier = 1 - (totalTax / totalPreTaxReturn);
+
+            for (const key in plan.allocations) {
+                const percentage = plan.allocations[key];
+                if (percentage > 0) {
+                    const fund = funds[key];
+                    const initialAmount = totalInvestment * (percentage / 100);
+                    const postTaxRate = (fund.return / 100) * (fund.type === 'Equity' || fund.type === 'Hybrid' ? effectivePostTaxMultiplier : 1);
+                    const finalValue = initialAmount * Math.pow(1 + postTaxRate, years);
+                    
+                    results.labels.push(fund.name);
+                    results.data.push(finalValue);
+                    results.colors.push(fund.color);
+                }
+            }
+            return results;
         }
 
 
@@ -375,7 +407,6 @@
             const yearLabels = Array.from({ length: 15 }, (_, i) => `Y${i + 1}`);
 
             // Tooltip callback configuration
-            const tooltipLabelCallback = (context) => `${context.label || ''}: ${formatIndianCurrency(context.raw)}`;
             const pieTooltipLabelCallback = (context) => {
                 const label = context.label || '';
                 const value = context.raw;
@@ -384,6 +415,26 @@
             };
             const lineTooltipLabelCallback = (context) => `${context.dataset.label || ''}: ${formatIndianCurrency(context.parsed.y)}`;
             const growthTooltipLabelCallback = (context) => `${context.dataset.label || ''}: ${formatIndianCurrency(context.raw)}`;
+            const yearlyGrowthTooltipLabelCallback = (context) => `${context.label || ''}: ${formatIndianCurrency(context.raw)}`;
+
+            // Yearly Growth Chart Data
+            const years = parseInt(yearInput.value) || 5;
+            const yearlyGrowthData = calculateYearlyFundGrowth(plan, years);
+
+            // Growth Milestones Data & Render
+            const milestones = [3, 5, 8, 10, 12, 15, 18, 20];
+            const milestoneContainer = document.getElementById('growth-milestones-container');
+            let milestoneHTML = '';
+            milestones.forEach(year => {
+                const growthPercent = (Math.pow(1 + postTaxRate, year) - 1) * 100;
+                milestoneHTML += `
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-600">After ${year} Years</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1">+${growthPercent.toFixed(0)}%</p>
+                    </div>
+                `;
+            });
+            milestoneContainer.innerHTML = milestoneHTML;
 
 
             // Update or create charts
@@ -392,9 +443,10 @@
 
             if (growthContributionChart) { growthContributionChart.data.datasets = growthDatasets; growthContributionChart.update('none'); }
             else { growthContributionChart = new Chart(document.getElementById('growth-contribution-chart'), { type: 'bar', data: { labels: ['Post-Tax Return'], datasets: growthDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: growthTooltipLabelCallback } } } } }); }
+            
+            if (yearlyGrowthChart) { yearlyGrowthChart.data = { labels: yearlyGrowthData.labels, datasets: [{ label: `Value after ${years} years`, data: yearlyGrowthData.data, backgroundColor: yearlyGrowthData.colors }] }; yearlyGrowthChart.update('none'); }
+            else { yearlyGrowthChart = new Chart(document.getElementById('yearly-growth-chart'), { type: 'bar', data: { labels: yearlyGrowthData.labels, datasets: [{ label: `Value after ${years} years`, data: yearlyGrowthData.data, backgroundColor: yearlyGrowthData.colors }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: yearlyGrowthTooltipLabelCallback } } } } }); }
 
-            if (taxEfficiencyChart) { taxEfficiencyChart.data.datasets[0].data = [metrics.equityTax, metrics.debtAndOtherTax]; taxEfficiencyChart.update('none'); }
-            else { taxEfficiencyChart = new Chart(document.getElementById('tax-efficiency-chart'), { type: 'doughnut', data: { labels: ['Equity/Hybrid Tax', 'Debt/Other Tax'], datasets: [{ data: [metrics.equityTax, metrics.debtAndOtherTax], backgroundColor: ['#ef4444', '#f97316'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: tooltipLabelCallback } } } } }); }
             
             if (mainLineChart) {
                 mainLineChart.data.datasets[0].data = nominal;
@@ -416,7 +468,7 @@
             btn.textContent = 'Exporting...';
             btn.disabled = true;
 
-            const charts = [allocationPieChart, growthContributionChart, taxEfficiencyChart, mainLineChart];
+            const charts = [allocationPieChart, growthContributionChart, yearlyGrowthChart, mainLineChart];
             charts.forEach(chart => { if (chart) { chart.options.animation = false; chart.update('none'); } });
 
             const element = document.getElementById('export-container');
@@ -461,7 +513,7 @@
             
             const element = document.getElementById('export-container');
             
-            const charts = [allocationPieChart, growthContributionChart, taxEfficiencyChart, mainLineChart];
+            const charts = [allocationPieChart, growthContributionChart, yearlyGrowthChart, mainLineChart];
             charts.forEach(chart => { if (chart) { chart.options.animation = false; chart.update('none'); } });
 
             html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
@@ -523,6 +575,7 @@
         
         totalInvestmentInput.addEventListener('change', initialize);
         totalInvestmentInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') initialize(); });
+        yearInput.addEventListener('input', () => updateAnalysisCharts(activePlanIndex));
         
         window.onload = initialize;
     </script>
