@@ -116,15 +116,25 @@
         };
         
         const initialPlans = [
+             {
+                name: 'Conservative Growth',
+                description: 'A lower-risk plan focused on stability with a significant allocation to Multi-Asset and Large/Mid Cap funds.',
+                allocations: { woc_multi_asset: 30, sbi_large_mid: 30, pp_flexi: 25, hdfc_mid: 15, hdfc_flexi: 0, invesco_small: 0, hdfc_small: 0 }
+            },
             {
                 name: 'Core & Satellite',
                 description: 'A balanced strategy with a solid core in Flexi/Mid caps and aggressive satellites in Small Caps for enhanced returns.',
                 allocations: { pp_flexi: 30, hdfc_mid: 30, sbi_large_mid: 15, hdfc_small: 15, woc_multi_asset: 10, hdfc_flexi: 0, invesco_small: 0 }
             },
             {
-                name: 'Mid & Small Cap Focus',
-                description: 'A higher-risk portfolio concentrating on the growth potential of Mid and Small Cap funds, balanced by a multi-asset fund.',
-                allocations: { hdfc_mid: 35, hdfc_small: 25, pp_flexi: 25, woc_multi_asset: 15, sbi_large_mid: 0, invesco_small: 0, hdfc_flexi: 0 }
+                name: 'Balanced Flexi',
+                description: 'A well-diversified portfolio that leverages multiple Flexi and Midcap funds for adaptable, long-term growth.',
+                allocations: { pp_flexi: 30, hdfc_flexi: 20, sbi_large_mid: 20, hdfc_mid: 20, hdfc_small: 10, woc_multi_asset: 0, invesco_small: 0 }
+            },
+             {
+                name: 'Mid-Cap Momentum',
+                description: 'A strategy heavily favoring proven Mid-Cap funds for high growth, supported by the stability of a Large/Mid cap fund.',
+                allocations: { hdfc_mid: 50, sbi_large_mid: 20, pp_flexi: 20, hdfc_small: 10, woc_multi_asset: 0, invesco_small: 0, hdfc_flexi: 0 }
             },
             {
                 name: 'Manager\'s Choice Flexi',
@@ -132,9 +142,19 @@
                 allocations: { pp_flexi: 35, hdfc_flexi: 20, hdfc_mid: 30, invesco_small: 15, woc_multi_asset: 0, sbi_large_mid: 0, hdfc_small: 0 }
             },
             {
-                name: 'Mid-Cap Momentum',
-                description: 'A strategy heavily favoring proven Mid-Cap funds for high growth, supported by the stability of a Large/Mid cap fund.',
-                allocations: { hdfc_mid: 50, sbi_large_mid: 20, pp_flexi: 20, hdfc_small: 10, woc_multi_asset: 0, invesco_small: 0, hdfc_flexi: 0 }
+                name: 'Mid & Small Cap Focus',
+                description: 'A higher-risk portfolio concentrating on the growth potential of Mid and Small Cap funds, balanced by a multi-asset fund.',
+                allocations: { hdfc_mid: 35, hdfc_small: 25, pp_flexi: 25, woc_multi_asset: 15, sbi_large_mid: 0, invesco_small: 0, hdfc_flexi: 0 }
+            },
+            {
+                name: 'Diversified Aggressive',
+                description: 'Spreads risk across the top-performing Mid and Small cap funds while maintaining a core in a solid Flexi Cap fund.',
+                allocations: { hdfc_mid: 25, invesco_small: 25, hdfc_small: 25, pp_flexi: 15, sbi_large_mid: 10, woc_multi_asset: 0, hdfc_flexi: 0 }
+            },
+            {
+                name: 'Pure Performance',
+                description: 'A very high-risk plan investing equally in the four funds with the highest historical return potential.',
+                allocations: { pp_flexi: 25, hdfc_mid: 25, invesco_small: 25, hdfc_small: 25, woc_multi_asset: 0, sbi_large_mid: 0, hdfc_flexi: 0 }
             },
             {
                 name: 'Small-Cap Aggressor',
@@ -443,5 +463,4 @@
     </script>
 </body>
 </html>
-
 
