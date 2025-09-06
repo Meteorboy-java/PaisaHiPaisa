@@ -199,8 +199,12 @@
         const goldReturnRate = 0.09; // 9% avg annual return for Gold in INR
         let projectionYears = 20; // State for projection chart years
         let isFocusedView = false;
-        let legendAnimationInterval = null;
-        let legendColorIndex = 0;
+        
+        const legendAnimation = {
+            interval: null,
+            colorIndex: 0,
+            colors: []
+        };
 
         // --- NEW FUND CONFIGURATION ---
         const funds = {
@@ -495,18 +499,16 @@
             });
             milestoneContainer.innerHTML = milestoneHTML;
 
-            if (legendAnimationInterval) clearInterval(legendAnimationInterval);
-            const projectionChartColors = ['#3b82f6', '#6b7280'];
-            legendColorIndex = 0; 
-            legendAnimationInterval = setInterval(() => {
-                if (yearlyGrowthChart && yearlyGrowthChart.legend && yearlyGrowthChart.legend.legendItems) {
-                    const gainsItem = yearlyGrowthChart.legend.legendItems.find(item => item.text === 'Gains');
-                    if (gainsItem) {
-                        legendColorIndex = (legendColorIndex + 1) % projectionChartColors.length;
-                        gainsItem.fillStyle = projectionChartColors[legendColorIndex];
-                        gainsItem.strokeStyle = projectionChartColors[legendColorIndex];
-                        yearlyGrowthChart.update('none'); 
-                    }
+            // --- LEGEND ANIMATION LOGIC ---
+            if (legendAnimation.interval) clearInterval(legendAnimation.interval);
+            legendAnimation.colors = yearlyGrowthData.colors.length > 0 ? yearlyGrowthData.colors : ['#3b82f6'];
+            legendAnimation.colorIndex = 0;
+            
+            legendAnimation.interval = setInterval(() => {
+                if (yearlyGrowthChart) {
+                    legendAnimation.colorIndex = (legendAnimation.colorIndex + 1) % legendAnimation.colors.length;
+                    // We just need to trigger an update, the generateLabels function will do the work
+                    yearlyGrowthChart.update('none'); 
                 }
             }, 1200);
 
@@ -522,7 +524,51 @@
                 yearlyGrowthChart.options.plugins.title.text = `Fund Value after ${years} Years`;
                 yearlyGrowthChart.update('none'); 
             } else { 
-                yearlyGrowthChart = new Chart(document.getElementById('yearly-growth-chart'), { type: 'bar', data: { labels: yearlyGrowthData.labels, datasets: yearlyGrowthDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: formatIndianCurrency } } }, plugins: { title: { display: true, text: `Fund Value after ${years} Years` }, legend: { display: true, position: 'top' }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatIndianCurrency(c.raw)}`, footer: (items) => `Total: ${formatIndianCurrency(items[0].parsed.y + (items[1] ? items[1].parsed.y : 0))}` } } } } }); 
+                yearlyGrowthChart = new Chart(document.getElementById('yearly-growth-chart'), { 
+                    type: 'bar', 
+                    data: { 
+                        labels: yearlyGrowthData.labels, 
+                        datasets: yearlyGrowthDatasets 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: formatIndianCurrency } } }, 
+                        plugins: { 
+                            title: { display: true, text: `Fund Value after ${years} Years` }, 
+                            legend: { 
+                                display: true, 
+                                position: 'top',
+                                labels: {
+                                    generateLabels: function(chart) {
+                                        const originalLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                        const gainsLabel = originalLabels.find(label => label.text === 'Gains');
+                                        if (gainsLabel && legendAnimation.colors.length > 1) {
+                                            gainsLabel.fillStyle = legendAnimation.colors[legendAnimation.colorIndex];
+                                            gainsLabel.strokeStyle = legendAnimation.colors[legendAnimation.colorIndex];
+                                        }
+                                        return originalLabels;
+                                    }
+                                }
+                            }, 
+                            tooltip: { 
+                                callbacks: { 
+                                    label: (c) => `${c.dataset.label}: ${formatIndianCurrency(c.raw)}`, 
+                                    footer: (items) => {
+                                        let initial = 0;
+                                        let gains = 0;
+                                        // Find initial and gains from the tooltip items based on dataset index
+                                        const initialItem = items.find(item => item.datasetIndex === 0);
+                                        const gainsItem = items.find(item => item.datasetIndex === 1);
+                                        if(initialItem) initial = initialItem.parsed.y;
+                                        if(gainsItem) gains = gainsItem.parsed.y;
+                                        return `Total: ${formatIndianCurrency(initial + gains)}`;
+                                    }
+                                } 
+                            } 
+                        } 
+                    } 
+                }); 
             }
             
             if (mainLineChart) {
