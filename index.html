@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Specific Fund Portfolio Planner (India)</title>
+    <title>Diversified Fund Portfolio Planner (India)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -46,12 +46,8 @@
         .control-btn:hover { background-color: #d1d5db; }
 
         @keyframes sweep {
-            0% {
-                transform: translateX(-100%) skewX(-15deg);
-            }
-            100% {
-                transform: translateX(250%) skewX(-15deg);
-            }
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(250%) skewX(-15deg); }
         }
 
         .javed-special {
@@ -64,31 +60,16 @@
         .javed-special::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(
-                to right,
-                transparent 0%,
-                rgba(244, 206, 20, 0.4) 50%, /* Lighter #f4ce14 */
-                transparent 100%
-            );
+            top: 0; left: 0; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent 0%, rgba(244, 206, 20, 0.4) 50%, transparent 100%);
             transform: translateX(-100%) skewX(-15deg);
             animation: sweep 3s linear infinite;
             z-index: 1;
         }
         
-        .javed-special > * {
-            position: relative;
-            z-index: 2;
-        }
-        .javed-special h2 {
-            color: #495e57;
-        }
-        .distribution-bar-segment {
-            transition: width 0.3s ease-in-out;
-        }
+        .javed-special > * { position: relative; z-index: 2; }
+        .javed-special h2 { color: #495e57; }
+        .distribution-bar-segment { transition: width 0.3s ease-in-out; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -163,68 +144,66 @@
         let totalInvestment = 300000;
         const inflationRate = 0.06; // 6%
 
-        // --- CONFIGURATION ---
+        // --- NEW FUND CONFIGURATION ---
         const funds = {
-            woc_multi_asset: { name: 'WOC Multi Asset', risk: 3, return: 18.0, type: 'Hybrid', color: '#34d399' },
-            sbi_large_mid: { name: 'SBI Large & Midcap', risk: 5, return: 21.0, type: 'Equity', color: '#fbbf24' },
+            // Core Diversified
             pp_flexi: { name: 'Parag Parikh Flexi', risk: 6, return: 24.0, type: 'Equity', color: '#60a5fa' },
             hdfc_flexi: { name: 'HDFC Flexi Cap', risk: 6, return: 22.0, type: 'Equity', color: '#818cf8' },
+            woc_multi_asset: { name: 'WOC Multi Asset', risk: 3, return: 18.0, type: 'Hybrid', color: '#34d399' },
+            sbi_large_mid: { name: 'SBI Large & Midcap', risk: 5, return: 21.0, type: 'Equity', color: '#fbbf24' },
+            
+            // Indian Large Cap (Index)
+            uti_nifty_50: { name: 'UTI Nifty 50 Index', risk: 4, return: 15.0, type: 'Index', color: '#2dd4bf' },
+            
+            // Indian Mid Cap
             hdfc_mid: { name: 'HDFC Mid Cap', risk: 7, return: 25.0, type: 'Equity', color: '#c084fc' },
-            invesco_small: { name: 'Invesco Smallcap', risk: 9, return: 28.0, type: 'Equity', color: '#f87171' },
+            mo_midcap_150: { name: 'Motilal Oswal Midcap 150', risk: 7, return: 26.0, type: 'Index', color: '#a78bfa' },
+
+            // Indian Small Cap
             hdfc_small: { name: 'HDFC Small Cap', risk: 9, return: 27.0, type: 'Equity', color: '#fb7185' },
+            invesco_small: { name: 'Invesco Smallcap', risk: 9, return: 28.0, type: 'Equity', color: '#f87171' },
+
+            // Sectoral / Thematic
+            sbi_tech: { name: 'SBI Technology Opp', risk: 8, return: 25.0, type: 'Sectoral', color: '#f472b6' },
+            sundaram_services: { name: 'Sundaram Services', risk: 8, return: 29.0, type: 'Sectoral', color: '#e879f9' },
+
+            // International
+            mo_nasdaq_100: { name: 'Motilal Oswal Nasdaq 100', risk: 9, return: 30.0, type: 'Overseas', color: '#0ea5e9' },
+            invesco_global_eq: { name: 'Invesco Global Equity', risk: 7, return: 20.0, type: 'Overseas', color: '#06b6d4' },
         };
         
+        // --- NEW DISTRIBUTION PLANS ---
         const initialPlans = [
             {
-                name: 'Javed Special',
+                name: "Javed's Diversified Growth",
                 special: true,
-                description: 'A special high-growth plan focusing on Mid and Small Caps, curated for aggressive wealth creation.',
-                allocations: { hdfc_mid: 30, invesco_small: 10, hdfc_small: 30, pp_flexi: 15, sbi_large_mid: 15, woc_multi_asset: 0, hdfc_flexi: 0 }
+                description: 'A well-diversified aggressive growth plan, balancing tech, small caps, and core equity funds.',
+                allocations: { pp_flexi: 12, hdfc_flexi: 7, woc_multi_asset: 5, sbi_large_mid: 14, uti_nifty_50: 0, hdfc_mid: 13, mo_midcap_150: 0, hdfc_small: 0, invesco_small: 21, sbi_tech: 23, sundaram_services: 0, mo_nasdaq_100: 5, invesco_global_eq: 0 }
             },
             {
-                name: 'Conservative Growth',
-                description: 'A lower-risk plan focused on stability with a significant allocation to Multi-Asset and Large/Mid Cap funds.',
-                allocations: { woc_multi_asset: 30, sbi_large_mid: 30, pp_flexi: 25, hdfc_mid: 15, hdfc_flexi: 0, invesco_small: 0, hdfc_small: 0 }
+                name: 'Global Diversifier',
+                description: 'A balanced portfolio mixing a solid Indian Flexi Cap core with international funds for geographical diversification.',
+                allocations: { pp_flexi: 40, mo_nasdaq_100: 30, invesco_global_eq: 30, hdfc_flexi: 0, woc_multi_asset: 0, sbi_large_mid: 0, uti_nifty_50: 0, hdfc_mid: 0, mo_midcap_150: 0, hdfc_small: 0, invesco_small: 0, sbi_tech: 0, sundaram_services: 0 }
             },
             {
-                name: 'Core & Satellite',
-                description: 'A balanced strategy with a solid core in Flexi/Mid caps and aggressive satellites in Small Caps for enhanced returns.',
-                allocations: { pp_flexi: 30, hdfc_mid: 30, sbi_large_mid: 15, hdfc_small: 15, woc_multi_asset: 10, hdfc_flexi: 0, invesco_small: 0 }
+                name: 'Stable Core with Indexing',
+                description: 'A lower-risk plan with a Nifty 50 Index core, complemented by stable multi-asset and large/mid-cap funds.',
+                allocations: { uti_nifty_50: 40, woc_multi_asset: 30, sbi_large_mid: 30, pp_flexi: 0, hdfc_flexi: 0, hdfc_mid: 0, mo_midcap_150: 0, hdfc_small: 0, invesco_small: 0, sbi_tech: 0, sundaram_services: 0, mo_nasdaq_100: 0, invesco_global_eq: 0 }
             },
             {
-                name: 'Balanced Flexi',
-                description: 'A well-diversified portfolio that leverages multiple Flexi and Midcap funds for adaptable, long-term growth.',
-                allocations: { pp_flexi: 30, hdfc_flexi: 20, sbi_large_mid: 20, hdfc_mid: 20, hdfc_small: 10, woc_multi_asset: 0, invesco_small: 0 }
+                name: 'The All-Rounder',
+                description: 'A well-diversified plan across market caps and geographies. A true "buy and hold" style portfolio.',
+                allocations: { pp_flexi: 30, uti_nifty_50: 20, hdfc_mid: 20, hdfc_small: 15, mo_nasdaq_100: 15, hdfc_flexi: 0, woc_multi_asset: 0, sbi_large_mid: 0, mo_midcap_150: 0, invesco_small: 0, sbi_tech: 0, sundaram_services: 0, invesco_global_eq: 0 }
             },
              {
-                name: 'Mid-Cap Momentum',
-                description: 'A strategy heavily favoring proven Mid-Cap funds for high growth, supported by the stability of a Large/Mid cap fund.',
-                allocations: { hdfc_mid: 50, sbi_large_mid: 20, pp_flexi: 20, hdfc_small: 10, woc_multi_asset: 0, invesco_small: 0, hdfc_flexi: 0 }
+                name: 'Mid & Small Cap Powerhouse',
+                description: 'High-risk strategy focusing on the explosive growth potential of Indian mid and small-cap companies.',
+                allocations: { hdfc_mid: 30, mo_midcap_150: 20, hdfc_small: 25, invesco_small: 25, pp_flexi: 0, hdfc_flexi: 0, woc_multi_asset: 0, sbi_large_mid: 0, uti_nifty_50: 0, sbi_tech: 0, sundaram_services: 0, mo_nasdaq_100: 0, invesco_global_eq: 0 }
             },
             {
-                name: 'Manager\'s Choice Flexi',
-                description: 'This dynamic plan allocates heavily to skilled Flexi Cap managers, complemented by strong Mid and Small caps for growth.',
-                allocations: { pp_flexi: 35, hdfc_flexi: 20, hdfc_mid: 30, invesco_small: 15, woc_multi_asset: 0, sbi_large_mid: 0, hdfc_small: 0 }
-            },
-            {
-                name: 'Mid & Small Cap Focus',
-                description: 'A higher-risk portfolio concentrating on the growth potential of Mid and Small Cap funds, balanced by a multi-asset fund.',
-                allocations: { hdfc_mid: 35, hdfc_small: 25, pp_flexi: 25, woc_multi_asset: 15, sbi_large_mid: 0, invesco_small: 0, hdfc_flexi: 0 }
-            },
-            {
-                name: 'Diversified Aggressive',
-                description: 'Spreads risk across the top-performing Mid and Small cap funds while maintaining a core in a solid Flexi Cap fund.',
-                allocations: { hdfc_mid: 25, invesco_small: 25, hdfc_small: 25, pp_flexi: 15, sbi_large_mid: 10, woc_multi_asset: 0, hdfc_flexi: 0 }
-            },
-            {
-                name: 'Pure Performance',
-                description: 'A very high-risk plan investing equally in the four funds with the highest historical return potential.',
-                allocations: { pp_flexi: 25, hdfc_mid: 25, invesco_small: 25, hdfc_small: 25, woc_multi_asset: 0, sbi_large_mid: 0, hdfc_flexi: 0 }
-            },
-            {
-                name: 'Small-Cap Aggressor',
-                description: 'The most aggressive plan, aiming for maximum returns by focusing on high-performing small-cap funds.',
-                allocations: { hdfc_small: 35, invesco_small: 35, hdfc_mid: 20, woc_multi_asset: 10, pp_flexi: 0, hdfc_flexi: 0, sbi_large_mid: 0 }
+                name: 'Index-Driven Growth',
+                description: 'Reduces manager risk by using index funds for large and mid-cap exposure, with a proven flexi-cap for alpha.',
+                allocations: { uti_nifty_50: 40, mo_midcap_150: 30, pp_flexi: 30, hdfc_flexi: 0, woc_multi_asset: 0, sbi_large_mid: 0, hdfc_mid: 0, hdfc_small: 0, invesco_small: 0, sbi_tech: 0, sundaram_services: 0, mo_nasdaq_100: 0, invesco_global_eq: 0 }
             }
         ];
 
@@ -243,6 +222,7 @@
         
         function calculateRiskScore(allocations) {
             const score = Object.entries(allocations).reduce((acc, [key, perc]) => {
+                if(!funds[key]) return acc;
                 return acc + (funds[key].risk * (perc / 100));
             }, 0);
             return score.toFixed(1);
@@ -255,13 +235,13 @@
 
             for (const key in plan.allocations) {
                 const percentage = plan.allocations[key];
-                if (percentage > 0) {
+                if (percentage > 0 && funds[key]) {
                     const amount = totalInvestment * (percentage / 100);
                     const fund = funds[key];
                     const preTaxReturn = amount * (fund.return / 100);
                     totalPreTaxReturn += preTaxReturn;
                     individualReturns[key] = { preTax: preTaxReturn, amount: amount };
-                    if (fund.type === 'Equity' || fund.type === 'Hybrid') totalEquityGain += preTaxReturn;
+                    if (fund.type === 'Equity' || fund.type === 'Hybrid' || fund.type === 'Overseas' || fund.type === 'Sectoral' || fund.type === 'Index') totalEquityGain += preTaxReturn;
                 }
             }
 
@@ -293,10 +273,10 @@
 
             for (const key in plan.allocations) {
                 const percentage = plan.allocations[key];
-                if (percentage > 0) {
+                if (percentage > 0 && funds[key]) {
                     const fund = funds[key];
                     const initialAmount = totalInvestment * (percentage / 100);
-                    const postTaxRate = (fund.return / 100) * (fund.type === 'Equity' || fund.type === 'Hybrid' ? effectivePostTaxMultiplier : 1);
+                    const postTaxRate = (fund.return / 100) * effectivePostTaxMultiplier;
                     const finalValue = initialAmount * Math.pow(1 + postTaxRate, years);
                     const gains = finalValue - initialAmount;
                     
@@ -308,7 +288,6 @@
             }
             return results;
         }
-
 
         // --- UI & CHARTING ---
         function renderSingleCard(planIndex) {
@@ -337,17 +316,17 @@
                 </div>
                 <h4 class="font-semibold text-sm mb-2 text-gray-700">Distribution:</h4>
                 <div class="w-full h-5 rounded-full flex overflow-hidden my-2 border border-gray-200">
-                    ${Object.entries(plan.allocations).filter(([_, perc]) => perc > 0).map(([key, perc]) => `
+                    ${Object.entries(plan.allocations).filter(([key, perc]) => perc > 0 && funds[key]).map(([key, perc]) => `
                         <div class="distribution-bar-segment" style="width: ${perc}%; background-color: ${funds[key].color};" title="${funds[key].name}: ${perc.toFixed(0)}%"></div>
                     `).join('')}
                 </div>
                 <ul class="text-sm space-y-2 mt-4">
-                    ${Object.entries(plan.allocations).map(([key, perc]) => `
+                    ${Object.entries(funds).map(([key, fund]) => `
                         <li class="flex justify-between items-center">
-                            <span class="text-xs">${funds[key].name}</span>
+                            <span class="text-xs">${fund.name}</span>
                             <div class="flex items-center gap-2">
                                 <button class="control-btn btn-minus" data-plan-index="${planIndex}" data-fund-key="${key}">-</button>
-                                <span class="font-bold w-12 text-center">${perc.toFixed(0)}%</span>
+                                <span class="font-bold w-12 text-center">${(plan.allocations[key] || 0).toFixed(0)}%</span>
                                 <button class="control-btn btn-plus" data-plan-index="${planIndex}" data-fund-key="${key}">+</button>
                             </div>
                         </li>
@@ -389,9 +368,9 @@
             });
 
             // Data for charts
-            const allocationLabels = Object.keys(plan.allocations).filter(k => plan.allocations[k] > 0).map(k => funds[k].name);
-            const allocationData = Object.keys(plan.allocations).filter(k => plan.allocations[k] > 0).map(k => plan.allocations[k]);
-            const allocationColors = Object.keys(plan.allocations).filter(k => plan.allocations[k] > 0).map(k => funds[k].color);
+            const allocationLabels = Object.keys(plan.allocations).filter(k => plan.allocations[k] > 0 && funds[k]).map(k => funds[k].name);
+            const allocationData = Object.keys(plan.allocations).filter(k => plan.allocations[k] > 0 && funds[k]).map(k => plan.allocations[k]);
+            const allocationColors = Object.keys(plan.allocations).filter(k => plan.allocations[k] > 0 && funds[k]).map(k => funds[k].color);
 
             const growthDatasets = Object.keys(metrics.individualReturns).map(key => {
                 const postTaxReturn = metrics.individualReturns[key].preTax * (1 - (metrics.totalPreTaxReturn > 0 ? metrics.totalTax / metrics.totalPreTaxReturn : 0));
@@ -470,6 +449,10 @@
                                         return `${context.dataset.label}: ${formatIndianCurrency(context.raw)}`;
                                     },
                                     footer: function(tooltipItems) {
+                                        let sum = 0;
+                                        tooltipItems.forEach(function(tooltipItem) {
+                                            sum += tooltipItem.parsed.y;
+                                        });
                                         const initial = tooltipItems[0].chart.data.datasets[0].data[tooltipItems[0].dataIndex];
                                         const gains = tooltipItems[0].chart.data.datasets[1].data[tooltipItems[0].dataIndex];
                                         return `Total: ${formatIndianCurrency(initial + gains)}`;
@@ -480,7 +463,6 @@
                     } 
                 }); 
             }
-
             
             if (mainLineChart) {
                 mainLineChart.data.datasets[0].data = nominal;
@@ -581,6 +563,9 @@
                 const { planIndex, fundKey } = target.dataset;
                 const isPlus = target.classList.contains('btn-plus');
                 
+                if (!currentPlansState[planIndex].allocations[fundKey]) {
+                     currentPlansState[planIndex].allocations[fundKey] = 0;
+                }
                 let currentVal = currentPlansState[planIndex].allocations[fundKey];
                 
                 if (isPlus && currentVal < 100) {
