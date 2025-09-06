@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -112,8 +113,16 @@
                  </div>
              </div>
              <div class="mt-12">
-                <h3 class="text-xl font-bold text-center">20-Year Growth Projection</h3>
+                <div class="flex justify-center items-center gap-4 mb-2">
+                    <h3 class="text-xl font-bold text-center">20-Year Growth Projection</h3>
+                     <div class="flex items-center gap-1">
+                        <button id="zoom-in-btn" class="control-btn w-6 h-6" title="Zoom In">+</button>
+                        <button id="zoom-out-btn" class="control-btn w-6 h-6" title="Zoom Out">-</button>
+                        <button id="zoom-reset-btn" class="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Reset Zoom">Reset</button>
+                    </div>
+                </div>
                 <p id="projection-growth-percentage" class="text-center text-2xl font-bold text-green-600 mb-4"></p>
+                <p class="text-center text-sm text-gray-500 mb-2 md:hidden">On mobile: Pinch to zoom, drag with one finger to pan.</p>
                 <div class="w-full h-96"><canvas id="main-chart-line"></canvas></div>
              </div>
              <div class="mt-12">
@@ -471,9 +480,27 @@
             } else {
                 mainLineChart = new Chart(document.getElementById('main-chart-line'), {
                     type: 'line', data: { labels: yearLabels, datasets: [
-                        { label: 'Portfolio Growth', data: nominal, borderColor: '#3b82f6', tension: 0.1, fill: false },
-                        { label: 'Inflation Baseline', data: inflation, borderColor: '#6b7280', tension: 0.1, fill: false, borderDash: [5, 5] },
-                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: formatIndianCurrency } } }, plugins: { legend: { display: true, position: 'top' }, tooltip: { callbacks: { label: lineTooltipLabelCallback } } } }
+                        { label: 'Portfolio Growth', data: nominal, borderColor: '#3b82f6', tension: 0.1, fill: false, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#3b82f6' },
+                        { label: 'Inflation Baseline', data: inflation, borderColor: '#6b7280', tension: 0.1, fill: false, borderDash: [5, 5], pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#6b7280' },
+                    ]}, options: { 
+                        responsive: true, maintainAspectRatio: false, 
+                        scales: { y: { ticks: { callback: formatIndianCurrency } } }, 
+                        plugins: { 
+                            legend: { display: true, position: 'top' }, 
+                            tooltip: { callbacks: { label: lineTooltipLabelCallback } },
+                            zoom: {
+                                zoom: {
+                                    wheel: { enabled: true },
+                                    pinch: { enabled: true },
+                                    mode: 'x',
+                                },
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x',
+                                }
+                            }
+                        } 
+                    }
                 });
             }
         }
@@ -507,14 +534,14 @@
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
             
-            document.querySelectorAll('.action-btn').forEach(b => b.style.display = 'none');
+            document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn').forEach(b => b.style.display = 'none');
 
             html2pdf().from(element).set(opt).outputPdf('datauristring').then(function (pdfAsString) {
                 const newTab = window.open();
                 if (newTab) { newTab.document.write(`<iframe width='100%' height='100%' src='${pdfAsString}'></iframe>`); } 
                 else { alert('Please allow popups for this site to view the PDF.'); }
                 
-                document.querySelectorAll('.action-btn').forEach(b => b.style.display = 'block');
+                document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn').forEach(b => b.style.display = '');
                 btn.textContent = 'Export PDF';
                 btn.disabled = false;
                 charts.forEach((chart) => { if (chart) { chart.options.animation = true; chart.update('none'); } });
@@ -522,7 +549,7 @@
         }
         
         function exportToPNG() {
-            const buttons = document.querySelectorAll('.action-btn');
+            const buttons = document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn');
             buttons.forEach(b => b.disabled = true);
             exportPngBtn.textContent = 'Capturing...';
             buttons.forEach(b => b.style.display = 'none');
@@ -538,7 +565,7 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
 
-                buttons.forEach(b => b.style.display = 'block');
+                buttons.forEach(b => b.style.display = '');
                 exportPngBtn.textContent = 'Screenshot';
                 buttons.forEach(b => b.disabled = false);
                 charts.forEach((chart) => { if (chart) { chart.options.animation = true; chart.update('none'); } });
@@ -596,8 +623,22 @@
         totalInvestmentInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') initialize(); });
         yearInput.addEventListener('input', () => updateAnalysisCharts(activePlanIndex));
         
+        // Zoom button listeners
+        document.getElementById('zoom-in-btn').addEventListener('click', () => {
+            if (mainLineChart) mainLineChart.zoom(1.1);
+        });
+        document.getElementById('zoom-out-btn').addEventListener('click', () => {
+            if (mainLineChart) mainLineChart.zoom(0.9);
+        });
+        document.getElementById('zoom-reset-btn').addEventListener('click', () => {
+            if (mainLineChart) mainLineChart.resetZoom();
+        });
+
         window.onload = initialize;
     </script>
 </body>
 </html>
+
+
+
 
