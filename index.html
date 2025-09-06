@@ -40,8 +40,8 @@
         .png-btn:hover { background-color: #4338ca; }
         .control-btn {
             background-color: #e5e7eb; color: #4b5563; border-radius: 9999px;
-            width: 20px; height: 20px; display: flex; align-items: center;
-            justify-content: center; font-size: 1rem; line-height: 1; font-weight: bold;
+            width: 24px; height: 24px; display: flex; align-items: center;
+            justify-content: center; font-size: 1.1rem; line-height: 1; font-weight: bold;
             cursor: pointer;
         }
         .control-btn:hover { background-color: #d1d5db; }
@@ -89,6 +89,7 @@
             transition: opacity 0.3s, transform 0.3s;
             opacity: 0;
             transform: translateY(10px);
+            z-index: 50;
         }
         #scroll-to-analysis-btn.visible {
             display: flex;
@@ -99,16 +100,16 @@
 </head>
 <body class="text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8" id="export-container">
+    <div class="container mx-auto p-4 md:p-6 lg:p-8" id="export-container">
         <header class="text-center mb-10">
              <div class="flex flex-col md:flex-row justify-center items-center gap-4">
                 <div class="flex-grow">
-                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Interactive Fund Portfolio Analysis</h1>
-                    <p class="mt-4 text-lg text-gray-600">Analyze & customize investment strategies for your corpus.</p>
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">Interactive Fund Portfolio Analysis</h1>
+                    <p class="mt-3 md:mt-4 text-base md:text-lg text-gray-600">Analyze & customize investment strategies for your corpus.</p>
                 </div>
-                <div class="flex gap-2">
-                    <button id="export-pdf-btn" class="action-btn pdf-btn">Export PDF</button>
-                    <button id="export-png-btn" class="action-btn png-btn">Screenshot</button>
+                <div class="flex flex-row md:flex-col gap-2 mt-4 md:mt-0">
+                    <button id="export-pdf-btn" class="action-btn pdf-btn w-full">Export PDF</button>
+                    <button id="export-png-btn" class="action-btn png-btn w-full">Screenshot</button>
                 </div>
             </div>
         </header>
@@ -118,15 +119,15 @@
             <input type="number" id="totalInvestmentInput" value="300000" class="mt-2 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xl">
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" id="plans-container">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8" id="plans-container">
             <!-- Plan cards will be injected here by JS -->
         </div>
 
         <!-- Deeper Analysis Section -->
-        <div class="mt-12 border-t pt-8 card p-6 md:p-8" id="analysis-section">
-             <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">Deeper Analysis</h2>
-             <p id="analysis-title" class="text-center text-lg text-blue-600 font-semibold mb-8">Select a plan above to see detailed charts</p>
-             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div class="mt-12 border-t pt-8 card p-4 md:p-6 lg:p-8" id="analysis-section">
+             <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">Deeper Analysis</h2>
+             <p id="analysis-title" class="text-center text-base md:text-lg text-blue-600 font-semibold mb-8">Select a plan above to see detailed charts</p>
+             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                  <div>
                      <h3 class="text-xl font-bold text-center mb-4">Allocation Breakdown</h3>
                      <div class="w-full h-80 flex justify-center"><div class="max-w-xs"><canvas id="allocation-pie-chart"></canvas></div></div>
@@ -139,27 +140,27 @@
 
              <div class="mt-12">
                 <h3 class="text-xl font-bold text-center mb-4">Long-Term Growth Milestones</h3>
-                <div id="growth-milestones-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div id="growth-milestones-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-center">
                     <!-- Milestones will be injected here by JS -->
                 </div>
              </div>
 
              <div class="mt-12">
-                <div class="flex justify-center items-center gap-4 mb-2">
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-2">
                     <h3 class="text-xl font-bold text-center">20-Year Growth Projection</h3>
                      <div class="flex items-center gap-1">
-                        <button id="zoom-in-btn" class="control-btn w-6 h-6" title="Zoom In">+</button>
-                        <button id="zoom-out-btn" class="control-btn w-6 h-6" title="Zoom Out">-</button>
-                        <button id="zoom-reset-btn" class="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Reset Zoom">Reset</button>
+                        <button id="zoom-in-btn" class="control-btn w-7 h-7" title="Zoom In">+</button>
+                        <button id="zoom-out-btn" class="control-btn w-7 h-7" title="Zoom Out">-</button>
+                        <button id="zoom-reset-btn" class="text-sm px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300" title="Reset Zoom">Reset</button>
                     </div>
                 </div>
-                <p id="projection-growth-percentage" class="text-center text-2xl font-bold text-green-600 mb-4"></p>
+                <p id="projection-growth-percentage" class="text-center text-xl md:text-2xl font-bold text-green-600 mb-4"></p>
                 <p class="text-center text-sm text-gray-500 mb-2 md:hidden">On mobile: Pinch to zoom, drag with one finger to pan.</p>
                 <div class="w-full h-96"><canvas id="main-chart-line"></canvas></div>
              </div>
              <div class="mt-12">
                 <div class="text-center mb-4">
-                    <div class="mt-2 flex justify-center items-center gap-2">
+                    <div class="mt-2 flex flex-col sm:flex-row justify-center items-center gap-2">
                         <label for="year-input" class="text-sm font-medium">Growth break down after</label>
                         <input type="number" id="year-input" value="5" min="1" max="20" class="w-20 p-1 border border-gray-300 rounded-md text-center">
                         <label for="year-input" class="text-sm font-medium">years</label>
@@ -258,7 +259,7 @@
             }
         ];
 
-        let currentPlansState = JSON.parse(JSON.stringify(initialPlans));
+        let currentPlansState = JSON.parse(JSON.stringify(initialPlans.map(p => ({...p, showAllFunds: false}))));
         
         // --- CHART INSTANCES ---
         let allocationPieChart, growthContributionChart, yearlyGrowthChart, mainLineChart;
@@ -347,6 +348,11 @@
             const riskScore = calculateRiskScore(plan.allocations);
             const totalDistributed = Object.values(plan.allocations).reduce((a, b) => a + b, 0);
             
+            const showAll = plan.showAllFunds || false;
+            const fundsToShow = showAll 
+                ? Object.entries(funds) 
+                : Object.entries(funds).filter(([key, _]) => (plan.allocations[key] || 0) > 0);
+
             let cardHTML = `
                 <div class="flex justify-between items-start">
                     <h2 class="text-2xl font-bold text-gray-800">${plan.name}</h2>
@@ -372,9 +378,9 @@
                     `).join('')}
                 </div>
                 <ul class="text-sm space-y-2 mt-4">
-                    ${Object.entries(funds).map(([key, fund]) => `
+                    ${fundsToShow.map(([key, fund]) => `
                         <li class="flex justify-between items-center">
-                            <span class="text-xs">${fund.name}</span>
+                            <span class="text-xs flex-1 pr-2">${fund.name}</span>
                             <div class="flex items-center gap-2">
                                 <button class="control-btn btn-minus" data-plan-index="${planIndex}" data-fund-key="${key}">-</button>
                                 <span class="font-bold w-12 text-center">${(plan.allocations[key] || 0).toFixed(0)}%</span>
@@ -383,7 +389,12 @@
                         </li>
                     `).join('')}
                 </ul>
-                <div class="mt-4 pt-2 border-t">
+                 <div class="text-center mt-4">
+                    <button class="text-sm text-blue-600 hover:underline font-semibold toggle-funds-btn" data-plan-index="${planIndex}">
+                        ${showAll ? 'Show Fewer Funds' : `Show All ${Object.keys(funds).length} Funds`}
+                    </button>
+                </div>
+                <div class="mt-4 pt-3 border-t">
                     <p class="text-sm font-bold ${totalDistributed.toFixed(0) != 100 ? 'text-red-500' : 'text-gray-800'}">
                         Distributed: <span class="float-right">${totalDistributed.toFixed(0)}%</span>
                     </p>
@@ -399,7 +410,7 @@
             container.innerHTML = ''; // Clear existing cards
             currentPlansState.forEach((plan, index) => {
                 const card = document.createElement('div');
-                card.className = 'card p-6 interactive-card';
+                card.className = 'card p-4 md:p-6 interactive-card';
                 if(plan.special) {
                     card.classList.add('javed-special');
                 }
@@ -464,8 +475,8 @@
                 const gain = totalValue - totalInvestment;
                 milestoneHTML += `
                     <div class="bg-gray-100 p-3 rounded-lg">
-                        <p class="text-sm font-medium text-gray-600">After ${year} Years</p>
-                        <p class="text-xl font-bold text-green-600 mt-1">${formatIndianCurrency(totalValue)}</p>
+                        <p class="text-sm font-medium text-gray-600">After ${year} Yrs</p>
+                        <p class="text-lg md:text-xl font-bold text-green-600 mt-1">${formatIndianCurrency(totalValue)}</p>
                         <p class="text-xs text-gray-500">(${formatIndianCurrency(gain)} gain)</p>
                     </div>
                 `;
@@ -474,18 +485,21 @@
 
             // --- LEGEND ANIMATION LOGIC ---
             if (legendAnimationInterval) clearInterval(legendAnimationInterval);
+            const projectionChartColors = ['#3b82f6', '#6b7280'];
+            legendColorIndex = 0; 
+
             legendAnimationInterval = setInterval(() => {
-                if (yearlyGrowthChart && yearlyGrowthChart.legend && yearlyGrowthData.colors.length > 1) {
+                if (yearlyGrowthChart && yearlyGrowthChart.legend && yearlyGrowthChart.legend.legendItems) {
                     const gainsItem = yearlyGrowthChart.legend.legendItems.find(item => item.text === 'Gains');
                     if (gainsItem) {
-                        legendColorIndex = (legendColorIndex + 1) % yearlyGrowthData.colors.length;
-                        const nextColor = yearlyGrowthData.colors[legendColorIndex];
+                        legendColorIndex = (legendColorIndex + 1) % projectionChartColors.length;
+                        const nextColor = projectionChartColors[legendColorIndex];
                         gainsItem.fillStyle = nextColor;
-                        gainsItem.strokeStyle = nextColor; // Match border to fill
+                        gainsItem.strokeStyle = nextColor;
                         yearlyGrowthChart.update('none'); 
                     }
                 }
-            }, 800); // Cycle color every 800ms
+            }, 1200);
 
 
             // Update or create charts
@@ -517,12 +531,8 @@
                                         return `${context.dataset.label}: ${formatIndianCurrency(context.raw)}`;
                                     },
                                     footer: function(tooltipItems) {
-                                        let sum = 0;
-                                        tooltipItems.forEach(function(tooltipItem) {
-                                            sum += tooltipItem.parsed.y;
-                                        });
                                         const initial = tooltipItems[0].chart.data.datasets[0].data[tooltipItems[0].dataIndex];
-                                        const gains = tooltipItems[0].chart.data.datasets[1].data[tooltipItems[0].dataIndex];
+                                        const gains = tooltipItems[1] ? tooltipItems[1].chart.data.datasets[1].data[tooltipItems[1].dataIndex] : 0;
                                         return `Total: ${formatIndianCurrency(initial + gains)}`;
                                     }
                                 } 
@@ -600,7 +610,9 @@
                 if (newTab) { newTab.document.write(`<iframe width='100%' height='100%' src='${pdfAsString}'></iframe>`); } 
                 else { alert('Please allow popups for this site to view the PDF.'); }
                 
-                document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn, #scroll-to-analysis-btn').forEach(b => b.style.display = '');
+                document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn').forEach(b => b.style.display = '');
+                 if (window.scrollY > 300) { scrollToAnalysisBtn.classList.add('visible'); }
+
                 btn.textContent = 'Export PDF';
                 btn.disabled = false;
                 charts.forEach((chart) => { if (chart) { chart.options.animation = true; chart.update('none'); } });
@@ -627,6 +639,7 @@
                 buttons.forEach(b => b.style.display = '');
                 exportPngBtn.textContent = 'Screenshot';
                 buttons.forEach(b => b.disabled = false);
+                 if (window.scrollY > 300) { scrollToAnalysisBtn.classList.add('visible'); }
                 charts.forEach((chart) => { if (chart) { chart.options.animation = true; chart.update('none'); } });
             });
         }
@@ -636,13 +649,20 @@
         // --- INITIALIZATION ---
         function initialize() {
             totalInvestment = parseFloat(totalInvestmentInput.value) || 300000;
-            currentPlansState = JSON.parse(JSON.stringify(initialPlans));
+            currentPlansState = JSON.parse(JSON.stringify(initialPlans.map(p => ({...p, showAllFunds: false}))));
             renderAllCards();
             updateAnalysisCharts(activePlanIndex);
         }
 
         document.getElementById('plans-container').addEventListener('click', (e) => {
             const target = e.target;
+            
+            if (target.classList.contains('toggle-funds-btn')) {
+                const { planIndex } = target.dataset;
+                currentPlansState[planIndex].showAllFunds = !currentPlansState[planIndex].showAllFunds;
+                renderSingleCard(planIndex);
+                return;
+            }
 
             // Handle +/- button clicks
             if (target.classList.contains('control-btn')) {
