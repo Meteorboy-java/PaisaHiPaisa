@@ -71,6 +71,30 @@
         .javed-special > * { position: relative; z-index: 2; }
         .javed-special h2 { color: #495e57; }
         .distribution-bar-segment { transition: width 0.3s ease-in-out; }
+
+        #scroll-to-analysis-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3b82f6;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 9999px;
+            display: none; /* Initially hidden */
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        #scroll-to-analysis-btn.visible {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -99,7 +123,7 @@
         </div>
 
         <!-- Deeper Analysis Section -->
-        <div class="mt-12 border-t pt-8 card p-6 md:p-8">
+        <div class="mt-12 border-t pt-8 card p-6 md:p-8" id="analysis-section">
              <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">Deeper Analysis</h2>
              <p id="analysis-title" class="text-center text-lg text-blue-600 font-semibold mb-8">Select a plan above to see detailed charts</p>
              <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -112,6 +136,14 @@
                      <div class="w-full h-80"><canvas id="growth-contribution-chart"></canvas></div>
                  </div>
              </div>
+
+             <div class="mt-12">
+                <h3 class="text-xl font-bold text-center mb-4">Long-Term Growth Milestones</h3>
+                <div id="growth-milestones-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <!-- Milestones will be injected here by JS -->
+                </div>
+             </div>
+
              <div class="mt-12">
                 <div class="flex justify-center items-center gap-4 mb-2">
                     <h3 class="text-xl font-bold text-center">20-Year Growth Projection</h3>
@@ -128,30 +160,40 @@
              <div class="mt-12">
                 <div class="text-center mb-4">
                     <div class="mt-2 flex justify-center items-center gap-2">
-                        <label for="year-input" class="text-sm font-medium">Show growth breakdown after</label>
+                        <label for="year-input" class="text-sm font-medium">Growth break down after</label>
                         <input type="number" id="year-input" value="5" min="1" max="20" class="w-20 p-1 border border-gray-300 rounded-md text-center">
                         <label for="year-input" class="text-sm font-medium">years</label>
                     </div>
                 </div>
                  <div class="w-full h-96"><canvas id="yearly-growth-chart"></canvas></div>
              </div>
-             <div class="mt-12">
-                <h3 class="text-xl font-bold text-center mb-4">Long-Term Growth Milestones</h3>
-                <div id="growth-milestones-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <!-- Milestones will be injected here by JS -->
-                </div>
-             </div>
         </div>
     </div>
 
+    <button id="scroll-to-analysis-btn" title="Go to Analysis">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+    </button>
+
     <script>
+        // Register Chart.js plugins first
+        Chart.register(ChartZoom);
+
+        // Set Chart.js global font defaults to prevent potential rendering errors
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.weight = '500';
+        
         // --- DOM Elements & State ---
         const totalInvestmentInput = document.getElementById('totalInvestmentInput');
         const exportPdfBtn = document.getElementById('export-pdf-btn');
         const exportPngBtn = document.getElementById('export-png-btn');
         const yearInput = document.getElementById('year-input');
+        const scrollToAnalysisBtn = document.getElementById('scroll-to-analysis-btn');
         let totalInvestment = 300000;
         const inflationRate = 0.06; // 6%
+        let legendAnimationInterval = null;
+        let legendColorIndex = 0;
 
         // --- NEW FUND CONFIGURATION ---
         const funds = {
@@ -418,15 +460,32 @@
             const milestoneContainer = document.getElementById('growth-milestones-container');
             let milestoneHTML = '';
             milestones.forEach(year => {
-                const growthPercent = (Math.pow(1 + postTaxRate, year) - 1) * 100;
+                const totalValue = totalInvestment * Math.pow(1 + postTaxRate, year);
+                const gain = totalValue - totalInvestment;
                 milestoneHTML += `
-                    <div class="bg-gray-100 p-4 rounded-lg">
+                    <div class="bg-gray-100 p-3 rounded-lg">
                         <p class="text-sm font-medium text-gray-600">After ${year} Years</p>
-                        <p class="text-2xl font-bold text-green-600 mt-1">+${growthPercent.toFixed(0)}%</p>
+                        <p class="text-xl font-bold text-green-600 mt-1">${formatIndianCurrency(totalValue)}</p>
+                        <p class="text-xs text-gray-500">(${formatIndianCurrency(gain)} gain)</p>
                     </div>
                 `;
             });
             milestoneContainer.innerHTML = milestoneHTML;
+
+            // --- LEGEND ANIMATION LOGIC ---
+            if (legendAnimationInterval) clearInterval(legendAnimationInterval);
+            legendAnimationInterval = setInterval(() => {
+                if (yearlyGrowthChart && yearlyGrowthChart.legend && yearlyGrowthData.colors.length > 1) {
+                    const gainsItem = yearlyGrowthChart.legend.legendItems.find(item => item.text === 'Gains');
+                    if (gainsItem) {
+                        legendColorIndex = (legendColorIndex + 1) % yearlyGrowthData.colors.length;
+                        const nextColor = yearlyGrowthData.colors[legendColorIndex];
+                        gainsItem.fillStyle = nextColor;
+                        gainsItem.strokeStyle = nextColor; // Match border to fill
+                        yearlyGrowthChart.update('none'); 
+                    }
+                }
+            }, 800); // Cycle color every 800ms
 
 
             // Update or create charts
@@ -534,14 +593,14 @@
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
             
-            document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn').forEach(b => b.style.display = 'none');
+            document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn, #scroll-to-analysis-btn').forEach(b => b.style.display = 'none');
 
             html2pdf().from(element).set(opt).outputPdf('datauristring').then(function (pdfAsString) {
                 const newTab = window.open();
                 if (newTab) { newTab.document.write(`<iframe width='100%' height='100%' src='${pdfAsString}'></iframe>`); } 
                 else { alert('Please allow popups for this site to view the PDF.'); }
                 
-                document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn').forEach(b => b.style.display = '');
+                document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn, #scroll-to-analysis-btn').forEach(b => b.style.display = '');
                 btn.textContent = 'Export PDF';
                 btn.disabled = false;
                 charts.forEach((chart) => { if (chart) { chart.options.animation = true; chart.update('none'); } });
@@ -549,7 +608,7 @@
         }
         
         function exportToPNG() {
-            const buttons = document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn');
+            const buttons = document.querySelectorAll('.action-btn, .control-btn, #zoom-reset-btn, #scroll-to-analysis-btn');
             buttons.forEach(b => b.disabled = true);
             exportPngBtn.textContent = 'Capturing...';
             buttons.forEach(b => b.style.display = 'none');
@@ -634,11 +693,21 @@
             if (mainLineChart) mainLineChart.resetZoom();
         });
 
+        // Scroll to analysis button listener
+        scrollToAnalysisBtn.addEventListener('click', () => {
+            document.getElementById('analysis-section').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToAnalysisBtn.classList.add('visible');
+            } else {
+                scrollToAnalysisBtn.classList.remove('visible');
+            }
+        });
+
         window.onload = initialize;
     </script>
 </body>
 </html>
-
-
-
 
